@@ -34,7 +34,16 @@ class MainWindow(QMainWindow):
         if self.fileName:
             self.ocrObj.set_task(self.fileName)
         self.ocrObj.start()
-        self.ocrObj.show_result()
+        # self.ocrObj.show_result()
+        self.ocr_result = self.ocrObj.result
+        self.add_ocr_results()
+    def add_ocr_results(self):
+        txts = [line[1][0] for line in self.ocr_result]
+        self.ui.listWidgetResults.clear()
+        self.ui.listWidgetResults.addItems(txts)
+        # for txt in txts:
+        #     self.ui.listWidgetResults.addItem
+
         
 
     
