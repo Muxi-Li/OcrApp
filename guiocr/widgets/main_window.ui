@@ -31,6 +31,19 @@
         </property>
        </widget>
       </item>
+      <item>
+       <spacer name="horizontalSpacer">
+        <property name="orientation">
+         <enum>Qt::Horizontal</enum>
+        </property>
+        <property name="sizeHint" stdset="0">
+         <size>
+          <width>40</width>
+          <height>20</height>
+         </size>
+        </property>
+       </spacer>
+      </item>
      </layout>
     </item>
     <item>
@@ -39,14 +52,14 @@
        <widget class="QScrollArea" name="scrollAreaCanvas">
         <property name="minimumSize">
          <size>
-          <width>450</width>
-          <height>411</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>450</width>
-          <height>411</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
         <property name="widgetResizable">
@@ -57,8 +70,8 @@
           <rect>
            <x>0</x>
            <y>0</y>
-           <width>448</width>
-           <height>409</height>
+           <width>383</width>
+           <height>478</height>
           </rect>
          </property>
         </widget>
@@ -68,14 +81,14 @@
        <widget class="QListWidget" name="listWidgetResults">
         <property name="minimumSize">
          <size>
-          <width>251</width>
-          <height>411</height>
+          <width>0</width>
+          <height>0</height>
          </size>
         </property>
         <property name="maximumSize">
          <size>
-          <width>251</width>
-          <height>411</height>
+          <width>16777215</width>
+          <height>16777215</height>
          </size>
         </property>
        </widget>
