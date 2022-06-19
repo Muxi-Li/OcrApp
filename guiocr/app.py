@@ -9,11 +9,11 @@ class MainWindow(QMainWindow):
         self.fileName = ""
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
-        self.setWindowTitle("OcrDemo_v1.0")
+        self.setWindowTitle("OcrDemo_v1.1")
         self.ocrObj = OcrQt()
         # 按钮信号函数
-        self.ui.btnOpenfile.clicked.connect(self.openFile)
-        self.ui.btnStart.clicked.connect(self.ocrStart)
+        self.ui.btnOpenImg.clicked.connect(self.openFile)
+        self.ui.btnStartProcess.clicked.connect(self.ocrStart)
 
 
     def openFile(self):
@@ -34,15 +34,14 @@ class MainWindow(QMainWindow):
         if self.fileName:
             self.ocrObj.set_task(self.fileName)
         self.ocrObj.start()
-        # self.ocrObj.show_result()
+        self.ocrObj.show_result()
         self.ocr_result = self.ocrObj.result
         self.add_ocr_results()
     def add_ocr_results(self):
         txts = [line[1][0] for line in self.ocr_result]
         self.ui.listWidgetResults.clear()
         self.ui.listWidgetResults.addItems(txts)
-        # for txt in txts:
-        #     self.ui.listWidgetResults.addItem
+        
 
         
 

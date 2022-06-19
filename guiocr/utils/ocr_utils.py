@@ -9,7 +9,7 @@ class OcrQt:
 
     def start(self):
         self.result = self.ocr.ocr(self.img_path, cls=True)
-        # self.show()
+        
     
     def show_result(self):
         result = self.result
