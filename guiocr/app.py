@@ -1,14 +1,16 @@
 from ast import walk
 import os
-from PyQt5.QtWidgets import QMainWindow,QFileDialog,QWidget,QLabel,QButtonGroup
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QWidget, QLabel, QButtonGroup, QListWidgetItem
 from PyQt5 import QtGui
+from PyQt5.QtCore import Qt
 from guiocr.widgets.main_window import Ui_MainWindow
 from guiocr.widgets.label_list_widget import LabelListWidget
-from guiocr import __appname__,__appversion__
+from guiocr import __appname__, __appversion__
 from PyQt5.QtGui import QPixmap
 from guiocr.utils.ocr_utils import *
 
 here = os.path.dirname(__file__)
+
 
 class MainWindow(QMainWindow):
     def __init__(self):
@@ -27,7 +29,6 @@ class MainWindow(QMainWindow):
         self.checBtnGroup.addButton(self.ui.checkBox_layoutparser)
         self.checBtnGroup.setExclusive(True)
 
-
         # 添加按钮icon
         self.ui.btnOpenImg.setIcon(self.getIcon("open_img_grey"))
         self.ui.btnOpenDir.setIcon(self.getIcon("folder_open_grey"))
@@ -37,7 +38,6 @@ class MainWindow(QMainWindow):
         self.ui.btnEditShape.setIcon(self.getIcon("edit_grey"))
         self.ui.btnSaveAll.setIcon(self.getIcon("done_grey"))
         self.ui.btnBrightness.setIcon(self.getIcon("brightness_grey"))
-
 
         # 信号与槽函数
         self.ui.btnOpenImg.clicked.connect(self.openFile)
@@ -54,7 +54,6 @@ class MainWindow(QMainWindow):
         # self.labelList = LabelListWidget()
         # self.ui.listWidgetResults.setwidget
 
-
     def onItemResultClicked(self):
         pass
 
@@ -65,10 +64,18 @@ class MainWindow(QMainWindow):
         pass
 
     def startProcess(self):
-        pass
+        if self.fileName:
+            self.ocrObj.set_task(self.fileName)
+        self.ocrObj.start()
+        self.ocr_result = self.ocrObj.result
+        self.addOcrResult()
 
     def openPreImg(self):
-        pass
+        currIndex = self.imageList.index(self.fileName)
+        if currIndex-1 >= 0:
+            filename = self.imageList[currIndex-1]
+            self.loadFile(filename)
+        self.fileName = filename
 
     def openNextImg(self):
         filename = None
@@ -81,10 +88,9 @@ class MainWindow(QMainWindow):
             else:
                 filename = self.imageList[-1]
         self.fileName = filename
-        self.load_file(self.fileName)
+        self.loadFile(self.fileName)
 
-
-    def openDirDialog(self,dirpath = None):
+    def openDirDialog(self, dirpath=None):
         defaultOpenDirPath = dirpath if dirpath else "."
         targetDirPath = str(
             QFileDialog.getExistingDirectory(
@@ -97,57 +103,49 @@ class MainWindow(QMainWindow):
         self.fileName = None
         self.importDirImages(targetDirPath)
 
-    def getIcon(self,iconName):
-        self.icon_dir = os.path.join(here,"./icons")
-        path = os.path.join(self.icon_dir,f"{iconName}.png")
+    def getIcon(self, iconName):
+        self.icon_dir = os.path.join(here, "./icons")
+        path = os.path.join(self.icon_dir, f"{iconName}.png")
         return QtGui.QIcon(path)
-        
 
     def openFile(self):
-        filename,fileType = QFileDialog.getOpenFileName(self,"选取文件",os.getcwd(),"All Files(*);;Files(*.jpg)")
-        # self.fileName = filename
-        self.load_file(filename)
+        filename, fileType = QFileDialog.getOpenFileName(
+            self, "选取文件", os.getcwd(), "All Files(*);;Files(*.jpg)")
+        self.fileName = filename
+        self.loadFile(filename)
 
-    def importDirImages(self,dirpath):
+    def importDirImages(self, dirpath):
         self.imageList = self.scanAllImages(dirpath)
         self.openNextImg()
 
-
-    def scanAllImages(self,dirpath):
+    def scanAllImages(self, dirpath):
         images = []
-        for root,dirs,files in os.walk(dirpath):
+        for root, dirs, files in os.walk(dirpath):
             for file in files:
-                relativePath = os.path.join(root,file)
+                relativePath = os.path.join(root, file)
                 images.append(relativePath)
         return images
 
-
-
-    def load_file(self,fileName=None):
+    def loadFile(self, fileName=None):
         image = QPixmap(fileName)
         w = image.width()
         h = image.height()
         self.qwidget = QWidget()
-        self.qwidget.setFixedSize(w,h)
+        self.qwidget.setFixedSize(w, h)
         self.label = QLabel(self.qwidget)
-        self.label.setFixedSize(w,h)
+        self.label.setFixedSize(w, h)
         self.label.setPixmap(image)
         self.ui.scrollAreaCanvas.setWidget(self.label)
-    # def ocrStart(self):
-    #     if self.fileName:
-    #         self.ocrObj.set_task(self.fileName)
-    #     self.ocrObj.start()
-    #     self.ocrObj.show_result()
-    #     self.ocr_result = self.ocrObj.result
-    #     self.add_ocr_results()
-    # def add_ocr_results(self):
-    #     txts = [line[1][0] for line in self.ocr_result]
-    #     self.ui.listWidgetResults.clear()
-    #     self.ui.listWidgetResults.addItems(txts)
-        
 
-        
+    def addOcrResult(self):
+        txts = [line[1][0] for line in self.ocr_result]
+        self.ui.listWidgetResults.clear()
+        for txt in txts:
+            self.addResultItem(txt)
 
-    
-
-
+    def addResultItem(self, item):
+        newItem = QListWidgetItem(item, self.ui.listWidgetResults)
+        newItem.setCheckState(Qt.Checked)
+        newItem.setFlags(Qt.ItemIsEditable |
+                         Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+        self.ui.listWidgetResults.addItem(newItem)
