@@ -8,7 +8,7 @@ from guiocr.widgets.canvas import Canvas
 from guiocr import __appname__, __appversion__
 from PyQt5.QtGui import QPixmap, QImage
 from guiocr.utils.ocr_utils import *
-from guiocr.utils.shape import Rectangles
+# from guiocr.utils.shape import Rectangle
 import PIL.Image
 import io
 here = os.path.dirname(__file__)
@@ -148,12 +148,19 @@ class MainWindow(QMainWindow):
 
     def addOcrResult(self):
         txts = [line[1][0] for line in self.ocr_result]
-        # boxes = [line[0] for line in self.ocr_result]
+        boxes = [line[0] for line in self.ocr_result]
+        shapes = []
         self.ui.listWidgetResults.clear()
         for i in range(len(txts)):
-            self.addResultItem(txts[i])
-
-    def addResultItem(self, txt):
+            x1 = boxes[i][0][0]
+            y1 = boxes[i][0][1]
+            x2 = boxes[i][2][0]
+            y2 = boxes[i][2][1]
+            rec = QRect(x1,y1,x2-x1,y2-y1)
+            shapes.append(rec)
+            self.addResultItem(txts[i],rec)
+        self.canvas.loadShapes(shapes)
+    def addResultItem(self, txt,rec):
         newItem = QListWidgetItem(txt, self.ui.listWidgetResults)
         newItem.setCheckState(Qt.Checked)
         newItem.setFlags(Qt.ItemIsEditable |
