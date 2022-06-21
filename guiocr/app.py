@@ -2,12 +2,13 @@ from ast import walk
 import os
 from PyQt5.QtWidgets import QMainWindow, QFileDialog, QWidget, QLabel, QButtonGroup, QListWidgetItem
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt
+from PyQt5.QtCore import Qt,QRect
 from guiocr.widgets.main_window import Ui_MainWindow
 from guiocr.widgets.label_list_widget import LabelListWidget
 from guiocr import __appname__, __appversion__
 from PyQt5.QtGui import QPixmap
 from guiocr.utils.ocr_utils import *
+from guiocr.utils.shape import Rectangles
 
 here = os.path.dirname(__file__)
 
@@ -20,6 +21,7 @@ class MainWindow(QMainWindow):
         self.ui.setupUi(self)
         self.setWindowTitle(__appname__+'_'+__appversion__)
         self.ocrObj = OcrQt()
+        self.recObj = Rectangles()
 
         # 单选按钮组
         self.checBtnGroup = QButtonGroup(self)
@@ -51,8 +53,6 @@ class MainWindow(QMainWindow):
 
         self.ui.listWidgetResults.clear()
 
-        # self.labelList = LabelListWidget()
-        # self.ui.listWidgetResults.setwidget
 
     def onItemResultClicked(self):
         pass
@@ -127,6 +127,7 @@ class MainWindow(QMainWindow):
         return images
 
     def loadFile(self, fileName=None):
+        
         image = QPixmap(fileName)
         w = image.width()
         h = image.height()
@@ -139,13 +140,18 @@ class MainWindow(QMainWindow):
 
     def addOcrResult(self):
         txts = [line[1][0] for line in self.ocr_result]
+        boxes = [line[0] for line in self.ocr_result]
         self.ui.listWidgetResults.clear()
-        for txt in txts:
-            self.addResultItem(txt)
+        for i in range(len(txts)):
+            self.addResultItem(txts[i],boxes[i])
+        
 
-    def addResultItem(self, item):
-        newItem = QListWidgetItem(item, self.ui.listWidgetResults)
+    def addResultItem(self, txt,box):
+        newItem = QListWidgetItem(txt, self.ui.listWidgetResults)
         newItem.setCheckState(Qt.Checked)
         newItem.setFlags(Qt.ItemIsEditable |
                          Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
+        self.recObj.set_task(box)
+        self.recObj.add_rec()
+        self.recObj.draw()
         self.ui.listWidgetResults.addItem(newItem)
