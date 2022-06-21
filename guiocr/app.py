@@ -1,27 +1,28 @@
 from ast import walk
 import os
-from PyQt5.QtWidgets import QMainWindow, QFileDialog, QWidget, QLabel, QButtonGroup, QListWidgetItem
+from PyQt5.QtWidgets import QMainWindow, QFileDialog, QLabel, QButtonGroup, QListWidgetItem
 from PyQt5 import QtGui
-from PyQt5.QtCore import Qt,QRect
+from PyQt5.QtCore import Qt, QRect
 from guiocr.widgets.main_window import Ui_MainWindow
-from guiocr.widgets.label_list_widget import LabelListWidget
+from guiocr.widgets.canvas import Canvas
 from guiocr import __appname__, __appversion__
-from PyQt5.QtGui import QPixmap
+from PyQt5.QtGui import QPixmap, QImage
 from guiocr.utils.ocr_utils import *
 from guiocr.utils.shape import Rectangles
-
+import PIL.Image
+import io
 here = os.path.dirname(__file__)
 
 
 class MainWindow(QMainWindow):
     def __init__(self):
         super().__init__()
-        self.fileName = ""
+        self.fileName = None
         self.ui = Ui_MainWindow()
         self.ui.setupUi(self)
         self.setWindowTitle(__appname__+'_'+__appversion__)
         self.ocrObj = OcrQt()
-        self.recObj = Rectangles()
+        self.canvas = Canvas()
 
         # 单选按钮组
         self.checBtnGroup = QButtonGroup(self)
@@ -41,6 +42,8 @@ class MainWindow(QMainWindow):
         self.ui.btnSaveAll.setIcon(self.getIcon("done_grey"))
         self.ui.btnBrightness.setIcon(self.getIcon("brightness_grey"))
 
+        self.ui.scrollAreaCanvas.setWidget(self.canvas)
+
         # 信号与槽函数
         self.ui.btnOpenImg.clicked.connect(self.openFile)
         self.ui.btnOpenDir.clicked.connect(self.openDirDialog)
@@ -52,7 +55,6 @@ class MainWindow(QMainWindow):
         self.ui.listWidgetResults.clicked.connect(self.onItemResultClicked)
 
         self.ui.listWidgetResults.clear()
-
 
     def onItemResultClicked(self):
         pass
@@ -100,7 +102,6 @@ class MainWindow(QMainWindow):
                 QFileDialog.ShowDirsOnly
             )
         )
-        self.fileName = None
         self.importDirImages(targetDirPath)
 
     def getIcon(self, iconName):
@@ -126,32 +127,35 @@ class MainWindow(QMainWindow):
                 images.append(relativePath)
         return images
 
-    def loadFile(self, fileName=None):
-        
-        image = QPixmap(fileName)
-        w = image.width()
-        h = image.height()
-        self.qwidget = QWidget()
-        self.qwidget.setFixedSize(w, h)
-        self.label = QLabel(self.qwidget)
-        self.label.setFixedSize(w, h)
-        self.label.setPixmap(image)
-        self.ui.scrollAreaCanvas.setWidget(self.label)
+    def loadFile(self, filename=None):
+        self.resetState()
+        self.imageData = self.loadImageFile(filename)
+        self.image = QImage.fromData(self.imageData)
+        self.canvas.loadPixmap(QPixmap.fromImage(self.image))
+
+    def resetState(self):
+        # self.fileName = None
+        self.imageData = None
+        self.image = None
+        self.canvas.resetState()
+
+    def loadImageFile(self, filename):
+        image_pil = PIL.Image.open(filename)
+        with io.BytesIO() as f:
+            image_pil.save(f, "JPEG")
+            f.seek(0)
+            return f.read()
 
     def addOcrResult(self):
         txts = [line[1][0] for line in self.ocr_result]
-        boxes = [line[0] for line in self.ocr_result]
+        # boxes = [line[0] for line in self.ocr_result]
         self.ui.listWidgetResults.clear()
         for i in range(len(txts)):
-            self.addResultItem(txts[i],boxes[i])
-        
+            self.addResultItem(txts[i])
 
-    def addResultItem(self, txt,box):
+    def addResultItem(self, txt):
         newItem = QListWidgetItem(txt, self.ui.listWidgetResults)
         newItem.setCheckState(Qt.Checked)
         newItem.setFlags(Qt.ItemIsEditable |
                          Qt.ItemIsSelectable | Qt.ItemIsUserCheckable | Qt.ItemIsEnabled)
-        self.recObj.set_task(box)
-        self.recObj.add_rec()
-        self.recObj.draw()
         self.ui.listWidgetResults.addItem(newItem)
